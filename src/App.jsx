@@ -1,5 +1,5 @@
-import { Suspense, lazy } from "react";
-import { motion } from "framer-motion";
+import { Suspense, lazy, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Route, Routes } from "react-router-dom";
 import MainLayout from "./components/dolphin/MainLayout";
 import logoImage from "./assets/dolphin-logo-transparent.png";
@@ -13,20 +13,27 @@ const MotionDiv = motion.div;
 const MotionImg = motion.img;
 const MotionP = motion.p;
 
-function RouteFallback() {
+function LoadingScreen() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center px-6 py-20">
+    <MotionDiv
+      key="site-loader"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+      className="fixed inset-0 z-[9999] flex min-h-screen items-center justify-center bg-[#FBFBFB] px-6"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(198,231,255,0.45),transparent_24%),radial-gradient(circle_at_78%_28%,rgba(255,221,174,0.42),transparent_24%),linear-gradient(180deg,#FBFBFB_0%,#f6fbff_100%)]" />
       <MotionDiv
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="text-center"
+        className="relative z-10 text-center"
       >
         <MotionImg
           src={logoImage}
           alt="Dolphin Enterprises"
-          className="mx-auto h-24 w-auto object-contain sm:h-28"
+          className="mx-auto h-28 w-auto object-contain sm:h-32"
           animate={{ opacity: [1, 0.46, 1] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -38,56 +45,80 @@ function RouteFallback() {
           Site is loading
         </MotionP>
       </MotionDiv>
-    </div>
+    </MotionDiv>
   );
 }
 
+function RouteFallback() {
+  return <LoadingScreen />;
+}
+
 function App() {
+  const [showLoader, setShowLoader] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowLoader(false);
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
-        <Route
-          path="/"
-          element={
-            <Suspense fallback={<RouteFallback />}>
-              <LandingPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/volumetric-weight-calculator"
-          element={
-            <Suspense fallback={<RouteFallback />}>
-              <VolumetricCalculatorPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/rate-calculator"
-          element={
-            <Suspense fallback={<RouteFallback />}>
-              <RateCalculatorPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="/tracking"
-          element={
-            <Suspense fallback={<RouteFallback />}>
-              <TrackingPage />
-            </Suspense>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <Suspense fallback={<RouteFallback />}>
-              <NotFoundPage />
-            </Suspense>
-          }
-        />
-      </Route>
-    </Routes>
+    <>
+      <MotionDiv
+        initial={false}
+        animate={{ opacity: showLoader ? 0 : 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route
+              path="/"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <LandingPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/volumetric-weight-calculator"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <VolumetricCalculatorPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/rate-calculator"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <RateCalculatorPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/tracking"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <TrackingPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <NotFoundPage />
+                </Suspense>
+              }
+            />
+          </Route>
+        </Routes>
+      </MotionDiv>
+
+      <AnimatePresence>{showLoader ? <LoadingScreen /> : null}</AnimatePresence>
+    </>
   );
 }
 
