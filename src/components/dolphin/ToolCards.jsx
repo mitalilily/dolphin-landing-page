@@ -2,12 +2,63 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import Icon from "./Icons";
-import { Field, Reveal, SelectField } from "./primitives";
-import { rateZones, serviceModes } from "./content";
+import { Field, Reveal } from "./primitives";
 import { trackingStatuses } from "./siteData";
+import { calculateShippingEstimate, isValidPincode } from "../../utils/shippingCalculator";
 
 const MotionArticle = motion.article;
 const MotionForm = motion.form;
+const COURIER_CART_API = "https://api.couriercart.in/api";
+const PINCODE_API = "https://api.postalpincode.in/pincode";
+const paymentTypes = ["Prepaid", "COD"];
+const rateBucketKeys = ["rates", "localRates", "regionalRates", "metroRates", "nationalRates", "zonalRates"];
+
+function parseNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function getCourierName(courier) {
+  return courier?.name || courier?.courier_name || courier?.courierName || courier?.partner_name || "Courier";
+}
+
+function getCourierRateDetails(courier) {
+  const knownBuckets = rateBucketKeys.map((key) => courier?.[key]?.forward);
+  const nestedBuckets = Object.values(courier || {})
+    .filter((value) => value && typeof value === "object" && !Array.isArray(value))
+    .map((value) => value?.forward)
+    .filter(Boolean);
+  const forwardRate = [courier?.forward, courier?.rates?.forward, ...knownBuckets, ...nestedBuckets].find(
+    (value) => value && (value.rate != null || value.mode)
+  );
+
+  return {
+    mode: forwardRate?.mode || courier?.mode || "",
+    rate: parseNumber(forwardRate?.rate ?? courier?.rate),
+  };
+}
+
+function formatCurrency(amount) {
+  return amount != null ? `Rs ${amount.toFixed(2)}` : "-";
+}
+
+function formatChargeableWeight(weight) {
+  const numericWeight = parseNumber(weight);
+
+  if (numericWeight == null || numericWeight <= 0) {
+    return "-";
+  }
+
+  if (numericWeight >= 1000) {
+    return `${(numericWeight / 1000).toFixed(2)} kg`;
+  }
+
+  if (numericWeight >= 100) {
+    return `${numericWeight.toFixed(0)} g`;
+  }
+
+  return `${numericWeight.toFixed(2)} kg`;
+}
 
 function readStoredValue(key, fallback) {
   if (typeof window === "undefined") {
@@ -97,21 +148,265 @@ export function VolumetricCalculatorCard({
 
 export function RateCalculatorCard({
   className = "surface-card rounded-[2rem] p-6",
-  defaultValues = { weight: "2.5", zone: "metro", service: "express", cod: "no" },
+  defaultValues = {
+    pickupPincode: "",
+    deliveryPincode: "",
+    weight: "",
+    length: "",
+    width: "",
+    height: "",
+    shipmentValue: "",
+    paymentType: "Prepaid",
+  },
 }) {
   const [form, setForm] = usePersistentState("dolphin-rate-calculator", defaultValues);
-  const weight = Number(form.weight) || 0;
-  const codFactor = form.cod === "yes" ? 1.08 : 1;
-  const estimatedRate = weight
-    ? Math.round((58 + weight * 26) * rateZones[form.zone] * serviceModes[form.service] * codFactor)
-    : 0;
+  const [pincodeMeta, setPincodeMeta] = useState({
+    pickup: { city: "", state: "", loading: false, message: "", tone: "muted" },
+    delivery: { city: "", state: "", loading: false, message: "", tone: "muted" },
+  });
+  const [couriers, setCouriers] = useState([]);
+  const [calculating, setCalculating] = useState(false);
+  const [calculatorError, setCalculatorError] = useState("");
+  const [showEstimate, setShowEstimate] = useState(false);
+
+  const estimate = useMemo(
+    () =>
+      calculateShippingEstimate({
+        weightInGrams: form.weight,
+        length: form.length,
+        width: form.width,
+        height: form.height,
+        pickupPincode: form.pickupPincode,
+        deliveryPincode: form.deliveryPincode,
+        paymentType: form.paymentType,
+        shipmentValue: form.shipmentValue,
+      }),
+    [
+      form.deliveryPincode,
+      form.height,
+      form.length,
+      form.paymentType,
+      form.pickupPincode,
+      form.shipmentValue,
+      form.weight,
+      form.width,
+    ]
+  );
+
+  const validationError = useMemo(() => {
+    if (!isValidPincode(form.pickupPincode)) {
+      return "Enter a valid 6-digit pickup pincode.";
+    }
+
+    if (!isValidPincode(form.deliveryPincode)) {
+      return "Enter a valid 6-digit delivery pincode.";
+    }
+
+    if (estimate.chargeableWeightKg <= 0) {
+      return "Enter a valid shipment weight or dimensions.";
+    }
+
+    if (form.paymentType === "COD" && !(Number(form.shipmentValue) > 0)) {
+      return "Enter the shipment value for COD orders.";
+    }
+
+    return "";
+  }, [
+    estimate.chargeableWeightKg,
+    form.deliveryPincode,
+    form.paymentType,
+    form.pickupPincode,
+    form.shipmentValue,
+  ]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
+    const nextValue =
+      name === "pickupPincode" || name === "deliveryPincode" ? value.replace(/\D/g, "").slice(0, 6) : value;
+
     setForm((current) => ({
       ...current,
-      [name]: value,
+      [name]: nextValue,
     }));
+  };
+
+  const lookupPincode = async (pincode) => {
+    if (!pincode || pincode.length !== 6) {
+      return { city: "", state: "", message: "", tone: "muted" };
+    }
+
+    try {
+      const response = await fetch(`${PINCODE_API}/${pincode}`);
+      const data = await response.json();
+      const postOffice = data?.[0]?.PostOffice?.[0];
+
+      if (data?.[0]?.Status === "Success" && postOffice) {
+        return {
+          city: postOffice.District || "",
+          state: postOffice.State || "",
+          message: "",
+          tone: "muted",
+        };
+      }
+
+      return { city: "", state: "", message: "Pincode details not found.", tone: "error" };
+    } catch {
+      return {
+        city: "",
+        state: "",
+        message: "City/state lookup is unavailable right now.",
+        tone: "muted",
+      };
+    }
+  };
+
+  useEffect(() => {
+    if (form.pickupPincode.length !== 6) {
+      setPincodeMeta((current) => ({
+        ...current,
+        pickup: { city: "", state: "", loading: false, message: "", tone: "muted" },
+      }));
+      return undefined;
+    }
+
+    let ignore = false;
+    setPincodeMeta((current) => ({
+      ...current,
+      pickup: { ...current.pickup, loading: true, message: "", tone: "muted" },
+    }));
+
+    lookupPincode(form.pickupPincode).then((result) => {
+      if (!ignore) {
+        setPincodeMeta((current) => ({ ...current, pickup: { ...result, loading: false } }));
+      }
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [form.pickupPincode]);
+
+  useEffect(() => {
+    if (form.deliveryPincode.length !== 6) {
+      setPincodeMeta((current) => ({
+        ...current,
+        delivery: { city: "", state: "", loading: false, message: "", tone: "muted" },
+      }));
+      return undefined;
+    }
+
+    let ignore = false;
+    setPincodeMeta((current) => ({
+      ...current,
+      delivery: { ...current.delivery, loading: true, message: "", tone: "muted" },
+    }));
+
+    lookupPincode(form.deliveryPincode).then((result) => {
+      if (!ignore) {
+        setPincodeMeta((current) => ({ ...current, delivery: { ...result, loading: false } }));
+      }
+    });
+
+    return () => {
+      ignore = true;
+    };
+  }, [form.deliveryPincode]);
+
+  const handleCalculate = async () => {
+    setShowEstimate(true);
+    setCouriers([]);
+    setCalculatorError("");
+
+    if (validationError) {
+      setCalculatorError(validationError);
+      return;
+    }
+
+    setCalculating(true);
+
+    try {
+      const payload = {
+        origin: form.pickupPincode,
+        destination: form.deliveryPincode,
+        payment_type: form.paymentType === "COD" ? "cod" : "prepaid",
+        weight: Math.max(Math.round(estimate.chargeableWeightKg * 1000), Number(form.weight) || 0),
+      };
+
+      if (Number(form.length) > 0) {
+        payload.length = form.length;
+      }
+
+      if (Number(form.width) > 0) {
+        payload.breadth = form.width;
+      }
+
+      if (Number(form.height) > 0) {
+        payload.height = form.height;
+      }
+
+      if (form.paymentType === "COD") {
+        payload.order_amount = form.shipmentValue;
+      }
+
+      const response = await fetch(`${COURIER_CART_API}/couriers/available-to-guest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        if (Array.isArray(data?.data) && data.data.length > 0) {
+          setCouriers(data.data.slice(0, 5));
+        } else {
+          setCalculatorError("Live courier rates are unavailable for these details. Showing an indicative estimate below.");
+        }
+      } else {
+        setCalculatorError(data?.error || "Live courier rates are unavailable right now. Showing an indicative estimate below.");
+      }
+    } catch (error) {
+      console.error(error);
+      setCalculatorError("Live courier rates are unavailable right now. Showing an indicative estimate below.");
+    } finally {
+      setCalculating(false);
+    }
+  };
+
+  const renderPincodeMeta = (meta) => {
+    if (meta.loading) {
+      return <p className="ml-1.5 mt-1 text-sm text-slate-500">Loading...</p>;
+    }
+
+    if (meta.city) {
+      return (
+        <p className="ml-1.5 mt-1 text-sm text-slate-500">
+          {meta.city}, {meta.state}
+        </p>
+      );
+    }
+
+    if (!meta.message) {
+      return null;
+    }
+
+    const toneClass = meta.tone === "error" ? "text-red-500" : "text-slate-500";
+
+    return <p className={`ml-1.5 mt-1 text-sm ${toneClass}`}>{meta.message}</p>;
+  };
+
+  const renderMode = (mode) => {
+    if (!mode) {
+      return "-";
+    }
+
+    const iconName = mode.toLowerCase() === "air" ? "rocket" : mode.toLowerCase() === "surface" ? "truck" : "route";
+
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1 text-sm font-semibold text-slate-800">
+        <Icon name={iconName} className="h-4 w-4 text-sky-700" />
+        {mode}
+      </span>
+    );
   };
 
   return (
@@ -123,72 +418,158 @@ export function RateCalculatorCard({
         <div>
           <h3 className="font-display text-2xl text-slate-900">Rate Calculator</h3>
           <p className="mt-1 text-sm text-slate-500">
-            Estimate shipping charges by zone, service level, weight, and optional COD handling.
+            Check available courier partners and live guest rates with pickup, delivery, weight, and dimensions.
           </p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Field label="Weight (kg)" name="weight" type="number" value={form.weight} onChange={handleChange} placeholder="Enter weight" />
-        <SelectField
-          label="Zone"
-          name="zone"
-          value={form.zone}
-          onChange={handleChange}
-          options={[
-            { value: "local", label: "Local" },
-            { value: "regional", label: "Regional" },
-            { value: "metro", label: "Metro" },
-            { value: "national", label: "National" },
-          ]}
-        />
-        <SelectField
-          label="Service level"
-          name="service"
-          value={form.service}
-          onChange={handleChange}
-          options={[
-            { value: "standard", label: "Standard" },
-            { value: "express", label: "Express" },
-            { value: "priority", label: "Priority" },
-          ]}
-        />
-        <SelectField
-          label="COD handling"
-          name="cod"
-          value={form.cod}
-          onChange={handleChange}
-          options={[
-            { value: "no", label: "No" },
-            { value: "yes", label: "Yes" },
-          ]}
-        />
-      </div>
-
-      <div className="mt-6 grid gap-6 border-t border-slate-200 pt-6 sm:grid-cols-[0.95fr_1.05fr]">
-        <div className="border-l-4 border-amber-300 pl-4 text-slate-900">
-          <p className="text-sm text-slate-600">Indicative quote</p>
-          <p className="mt-3 font-display text-4xl">Rs {estimatedRate || "--"}</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Final cost may vary by carrier, serviceability, volumetric billing, COD rules, and special handling.
-          </p>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div>
+          <Field
+            label="Pick-up Area Pincode"
+            name="pickupPincode"
+            value={form.pickupPincode}
+            onChange={handleChange}
+            placeholder="Enter pickup pincode"
+          />
+          {renderPincodeMeta(pincodeMeta.pickup)}
         </div>
-        <div className="border-l-4 border-sky-300 pl-4">
-          <p className="text-sm text-slate-500">Rate logic</p>
-          <ul className="mt-4 grid gap-3 text-sm text-slate-600">
-            {[
-              "Base pricing adjusts by shipment weight.",
-              "Zone selection reflects route complexity.",
-              "Service speed changes the estimate accordingly.",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <span className="mt-1 h-2.5 w-2.5 rounded-full bg-sky-300" />
-                <span>{item}</span>
-              </li>
+        <div>
+          <Field
+            label="Delivery Area Pincode"
+            name="deliveryPincode"
+            value={form.deliveryPincode}
+            onChange={handleChange}
+            placeholder="Enter delivery pincode"
+          />
+          {renderPincodeMeta(pincodeMeta.delivery)}
+        </div>
+        <Field
+          label="Actual Weight"
+          name="weight"
+          type="number"
+          value={form.weight}
+          onChange={handleChange}
+          placeholder="Enter actual weight"
+          postfix="GM"
+        />
+        <Field label="Length" name="length" type="number" value={form.length} onChange={handleChange} placeholder="Enter length" postfix="CM" />
+        <Field label="Width" name="width" type="number" value={form.width} onChange={handleChange} placeholder="Enter width" postfix="CM" />
+        <Field label="Height" name="height" type="number" value={form.height} onChange={handleChange} placeholder="Enter height" postfix="CM" />
+        <Field
+          label="Shipment Value"
+          name="shipmentValue"
+          type="number"
+          value={form.shipmentValue}
+          onChange={handleChange}
+          placeholder="Enter shipment value"
+          postfix="Rs"
+        />
+        <label className="grid gap-2 text-sm font-medium text-slate-700">
+          <span>Payment Type</span>
+          <select
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
+            name="paymentType"
+            value={form.paymentType}
+            onChange={handleChange}
+          >
+            {paymentTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
-          </ul>
-        </div>
+          </select>
+        </label>
       </div>
+
+      <button
+        type="button"
+        disabled={calculating}
+        onClick={handleCalculate}
+        className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD8A8_100%)] px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+      >
+        {calculating ? "Calculating..." : "Calculate"}
+      </button>
+
+      {calculatorError ? <p className="mt-4 text-sm font-semibold text-red-500">{calculatorError}</p> : null}
+
+      {showEstimate && estimate.chargeableWeightKg > 0 ? (
+        <div className="mt-6 grid gap-4 border-t border-slate-200 pt-6 md:grid-cols-3">
+          <div className="border-l-4 border-amber-300 pl-4 text-slate-900">
+            <p className="text-sm text-slate-600">Indicative estimate</p>
+            <p className="mt-3 font-display text-4xl">{formatCurrency(estimate.estimatedCost)}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Built from chargeable weight, delivery zone, and payment type so the calculator still returns a rate
+              when live courier quotes are unavailable.
+            </p>
+          </div>
+          <div className="border-l-4 border-sky-300 pl-4 text-slate-900">
+            <p className="text-sm text-slate-500">Billable weight</p>
+            <p className="mt-3 font-display text-3xl">{estimate.chargeableWeightKg.toFixed(2)} kg</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Actual: {estimate.actualWeightKg.toFixed(2)} kg
+              <br />
+              Volumetric: {estimate.volumetricWeightKg.toFixed(2)} kg
+            </p>
+          </div>
+          <div className="border-l-4 border-emerald-300 pl-4 text-slate-900">
+            <p className="text-sm text-slate-500">Zone and ETA</p>
+            <p className="mt-3 font-display text-3xl">{estimate.zoneLabel}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-600">Estimated transit: {estimate.eta}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {couriers.length > 0 ? (
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+          <table className="w-full min-w-[700px] table-auto text-left">
+            <thead className="bg-sky-50 text-slate-900">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Courier Partner</th>
+                <th className="px-4 py-3 font-semibold">Mode</th>
+                <th className="px-4 py-3 font-semibold">Chargeable Weight</th>
+                <th className="px-4 py-3 font-semibold">Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {couriers.map((courier, index) => {
+                const rateDetails = getCourierRateDetails(courier);
+
+                return (
+                  <motion.tr
+                    key={`${getCourierName(courier)}-${index}`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="border-b border-slate-100 bg-white last:border-b-0"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-900">
+                      <span className="flex items-center gap-2">
+                        <Icon name="package" className="h-4 w-4 text-sky-700" />
+                        {getCourierName(courier)}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">{renderMode(rateDetails.mode)}</td>
+                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">
+                      {formatChargeableWeight(courier?.chargeable_weight)}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-semibold text-amber-700">
+                      {formatCurrency(rateDetails.rate)}
+                    </td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <button
+            type="button"
+            className="m-4 inline-flex items-center justify-center rounded-2xl border border-sky-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-sky-50"
+            onClick={() => window.open("https://app.couriercart.in/tools/rate_calculator", "_blank")}
+          >
+            Get Full Rate Card
+          </button>
+        </div>
+      ) : null}
     </MotionArticle>
   );
 }

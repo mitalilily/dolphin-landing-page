@@ -127,20 +127,29 @@ export function InsightPreview() {
   );
 }
 
-export function Field({ label, name, type = "text", value, onChange, placeholder }) {
+export function Field({ label, name, type = "text", value, onChange, placeholder, postfix }) {
   return (
     <label className="grid gap-2 text-sm font-medium text-slate-700">
       <span>{label}</span>
-      <input
-        className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100"
-        name={name}
-        type={type}
-        min={type === "number" ? "0" : undefined}
-        step={type === "number" ? "0.1" : undefined}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-      />
+      <div className="relative">
+        <input
+          className={`w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-sky-300 focus:ring-4 focus:ring-sky-100 ${
+            postfix ? "pr-16" : ""
+          }`}
+          name={name}
+          type={type}
+          min={type === "number" ? "0" : undefined}
+          step={type === "number" ? "0.1" : undefined}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+        />
+        {postfix ? (
+          <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+            {postfix}
+          </span>
+        ) : null}
+      </div>
     </label>
   );
 }
