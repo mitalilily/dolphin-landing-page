@@ -1,23 +1,43 @@
 import { Suspense, lazy } from "react";
+import { motion } from "framer-motion";
 import { Route, Routes } from "react-router-dom";
 import MainLayout from "./components/dolphin/MainLayout";
+import logoImage from "./assets/dolphin-logo-transparent.png";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const RateCalculatorPage = lazy(() => import("./pages/RateCalculatorPage"));
 const TrackingPage = lazy(() => import("./pages/TrackingPage"));
 const VolumetricCalculatorPage = lazy(() => import("./pages/VolumetricCalculatorPage"));
+const MotionDiv = motion.div;
+const MotionImg = motion.img;
+const MotionP = motion.p;
 
 function RouteFallback() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center px-6 py-20">
-      <div className="w-full max-w-xl rounded-[28px] border border-white/60 bg-white/85 p-8 text-center shadow-[0_22px_80px_rgba(15,23,42,0.08)] backdrop-blur">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Loading</p>
-        <h2 className="mt-4 font-display text-3xl text-slate-900 sm:text-4xl">Preparing your dashboard view.</h2>
-        <p className="mt-3 text-sm text-slate-600 sm:text-base">
-          We&apos;re pulling in the next page so the experience stays fast and polished.
-        </p>
-      </div>
+      <MotionDiv
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="text-center"
+      >
+        <MotionImg
+          src={logoImage}
+          alt="Dolphin Enterprises"
+          className="mx-auto h-24 w-auto object-contain sm:h-28"
+          animate={{ opacity: [1, 0.46, 1] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <MotionP
+          className="mt-5 text-sm font-semibold uppercase tracking-[0.24em] text-slate-500"
+          animate={{ opacity: [0.42, 1, 0.42] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Site is loading
+        </MotionP>
+      </MotionDiv>
     </div>
   );
 }
