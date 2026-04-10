@@ -10,10 +10,10 @@ import { Reveal, SectionHeading } from "./primitives";
 const MotionArticle = motion.article;
 
 const primaryButtonClass =
-  "inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD8A8_100%)] px-6 py-4 text-sm font-semibold text-slate-900 shadow-[0_18px_34px_rgba(130,194,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(130,194,255,0.3)]";
+  "inline-flex w-full items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD8A8_100%)] px-6 py-4 text-sm font-semibold text-slate-900 shadow-[0_18px_34px_rgba(130,194,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_rgba(130,194,255,0.3)] sm:w-auto";
 
 const secondaryButtonClass =
-  "inline-flex items-center justify-center rounded-2xl border border-sky-200 bg-white/85 px-6 py-4 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white";
+  "inline-flex w-full items-center justify-center rounded-2xl border border-sky-200 bg-white/85 px-6 py-4 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white sm:w-auto";
 
 const platformBadges = [
   { label: "Shopify", icon: "shoppingBag", shell: "bg-white/88" },
@@ -180,7 +180,7 @@ function ActionAnchor({ href, children, className }) {
 
 function HeroVisual({ animationData, animationError }) {
   return (
-    <div className="relative flex min-h-[22rem] items-center justify-center sm:min-h-[26rem] lg:min-h-[36rem]">
+    <div className="relative flex min-h-[18rem] items-center justify-center sm:min-h-[26rem] lg:min-h-[36rem]">
       <div className="absolute inset-0 rounded-[2.8rem] bg-[radial-gradient(circle_at_18%_18%,rgba(198,231,255,0.8),transparent_26%),radial-gradient(circle_at_80%_26%,rgba(255,221,174,0.7),transparent_24%),radial-gradient(circle_at_48%_82%,rgba(212,246,255,0.75),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.76),rgba(255,255,255,0.16))]" />
       <div className="absolute inset-6 rounded-[2.4rem] bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:28px_28px]" />
       {animationData ? (
@@ -192,7 +192,7 @@ function HeroVisual({ animationData, animationError }) {
           className="relative z-10 mx-auto w-full max-w-[34rem]"
         />
       ) : (
-        <div className="relative z-10 flex h-[22rem] w-full max-w-[32rem] items-center justify-center rounded-[2rem] border border-white/70 bg-white/70 backdrop-blur-md sm:h-[26rem] lg:h-[30rem]">
+        <div className="relative z-10 flex h-[18rem] w-full max-w-[32rem] items-center justify-center rounded-[2rem] border border-white/70 bg-white/70 backdrop-blur-md sm:h-[26rem] lg:h-[30rem]">
           <div className="text-center">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
               {animationError ? "Animation unavailable" : "Loading animation"}
@@ -218,7 +218,7 @@ function HeroSection({ animationData, animationError }) {
             <span className="inline-flex items-center rounded-full border border-sky-200 bg-white px-4 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-700 shadow-sm">
               Built for high-growth eCommerce teams
             </span>
-            <h1 className="mt-6 font-display text-5xl leading-[0.95] text-slate-950 sm:text-6xl lg:text-[5.45rem]">
+            <h1 className="mt-6 font-display text-4xl leading-[1] text-slate-950 sm:text-6xl sm:leading-[0.95] lg:text-[5.45rem]">
               <span className="block">Smart Shipping</span>
               <span className="mt-2 block">For Smarter Sellers</span>
             </h1>
@@ -307,7 +307,7 @@ function PowerfulFeaturesSection() {
   return (
     <section className="section-transition mt-24 sm:mt-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2.7rem] border border-white/80 bg-[radial-gradient(circle_at_top_left,rgba(255,221,174,0.34),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,251,255,0.88))] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10">
+        <div className="rounded-[2rem] border border-white/80 bg-[radial-gradient(circle_at_top_left,rgba(255,221,174,0.34),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.95),rgba(244,251,255,0.88))] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:rounded-[2.7rem] sm:p-8 lg:p-10">
           <Reveal>
             <SectionHeading
               eyebrow="Powerful Features"
@@ -323,7 +323,7 @@ function PowerfulFeaturesSection() {
                 <MotionArticle
                   whileHover={{ y: -6, scale: 1.01 }}
                   transition={{ duration: 0.25 }}
-                  className={`h-full rounded-[2rem] border border-white/90 p-7 shadow-[0_18px_48px_rgba(15,23,42,0.06)] ${feature.shell}`}
+                  className={`h-full rounded-[1.6rem] border border-white/90 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:rounded-[2rem] sm:p-7 ${feature.shell}`}
                 >
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-slate-900 shadow-sm">
                     <Icon name={feature.icon} />
@@ -350,10 +350,10 @@ function WhatYouGetSection() {
   return (
     <section className="section-transition mt-24 sm:mt-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2.7rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(212,246,255,0.32)),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px)] bg-[size:auto,26px_26px,26px_26px] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10">
+        <div className="rounded-[2rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(212,246,255,0.32)),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px)] bg-[size:auto,26px_26px,26px_26px] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:rounded-[2.7rem] sm:p-8 lg:p-10">
           <div className="grid gap-10 xl:grid-cols-[0.78fr_1.22fr] xl:items-start">
             <Reveal>
-              <div className="rounded-[2.35rem] border border-white/90 bg-white/85 p-8 shadow-sm lg:p-10">
+              <div className="rounded-[1.75rem] border border-white/90 bg-white/85 p-5 shadow-sm sm:rounded-[2.35rem] sm:p-8 lg:p-10">
                 <SectionHeading
                   eyebrow="What You Get"
                   title="Everything you need to streamline your shipping operations in one powerful platform."
@@ -371,7 +371,7 @@ function WhatYouGetSection() {
                   <MotionArticle
                     whileHover={{ y: -6, scale: 1.01 }}
                     transition={{ duration: 0.25 }}
-                    className={`h-full rounded-[2rem] border border-white/90 p-7 shadow-[0_18px_48px_rgba(15,23,42,0.06)] ${item.shell} ${
+                    className={`h-full rounded-[1.6rem] border border-white/90 p-5 shadow-[0_18px_48px_rgba(15,23,42,0.06)] sm:rounded-[2rem] sm:p-7 ${item.shell} ${
                       index === valueCards.length - 1 ? "md:col-span-2" : ""
                     }`}
                   >
@@ -398,7 +398,7 @@ function WhatYouGetSection() {
 function AnalyticsDashboard() {
   return (
     <div className="rounded-[2.45rem] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(198,231,255,0.55),rgba(255,221,174,0.4))] p-6 shadow-[0_28px_80px_rgba(15,23,42,0.08)] sm:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
             Analytics dashboard
@@ -443,7 +443,7 @@ function InsightsSection() {
   return (
     <section className="section-transition mt-24 sm:mt-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2.7rem] border border-white/80 bg-[radial-gradient(circle_at_18%_18%,rgba(198,231,255,0.52),transparent_24%),radial-gradient(circle_at_78%_20%,rgba(255,221,174,0.46),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,251,255,0.92))] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10">
+        <div className="rounded-[2rem] border border-white/80 bg-[radial-gradient(circle_at_18%_18%,rgba(198,231,255,0.52),transparent_24%),radial-gradient(circle_at_78%_20%,rgba(255,221,174,0.46),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.95),rgba(246,251,255,0.92))] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:rounded-[2.7rem] sm:p-8 lg:p-10">
           <div className="grid gap-10 lg:grid-cols-[0.84fr_1fr] lg:items-center">
             <Reveal>
               <div>
@@ -456,8 +456,8 @@ function InsightsSection() {
                 <div className="mt-8 grid gap-4">
                   {insightCards.map((card, index) => (
                     <Reveal key={card.title} delay={0.05 * index}>
-                      <div className="rounded-[1.85rem] border border-white/90 bg-white/88 p-5 shadow-sm">
-                        <div className="flex items-start gap-4">
+                      <div className="rounded-[1.6rem] border border-white/90 bg-white/88 p-5 shadow-sm sm:rounded-[1.85rem]">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(198,231,255,0.92),rgba(255,221,174,0.82))] text-slate-900">
                             <Icon name={card.icon} />
                           </span>
@@ -489,7 +489,7 @@ function InsightsSection() {
 
 function CommercePanel() {
   return (
-    <div className="rounded-[2.45rem] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(212,246,255,0.4),rgba(198,231,255,0.32))] p-6 shadow-[0_28px_80px_rgba(15,23,42,0.08)] sm:p-8">
+    <div className="rounded-[2rem] border border-white/90 bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(212,246,255,0.4),rgba(198,231,255,0.32))] p-5 shadow-[0_28px_80px_rgba(15,23,42,0.08)] sm:rounded-[2.45rem] sm:p-8">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="rounded-[1.8rem] border border-white/90 bg-white/88 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
@@ -499,7 +499,7 @@ function CommercePanel() {
             {["Shopify", "WooCommerce", "Amazon", "Flipkart"].map((label, index) => (
               <div
                 key={label}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700"
               >
                 <span className="flex items-center gap-2">
                   <Icon
@@ -558,7 +558,7 @@ function EcommerceSection() {
   return (
     <section className="section-transition mt-24 sm:mt-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-[2.7rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,221,174,0.24)),linear-gradient(135deg,rgba(255,255,255,0.2),rgba(198,231,255,0.18))] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8 lg:p-10">
+        <div className="rounded-[2rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,221,174,0.24)),linear-gradient(135deg,rgba(255,255,255,0.2),rgba(198,231,255,0.18))] p-5 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:rounded-[2.7rem] sm:p-8 lg:p-10">
           <div className="grid gap-10 lg:grid-cols-[0.95fr_1fr] lg:items-center">
             <Reveal>
               <div>
@@ -571,8 +571,8 @@ function EcommerceSection() {
                 <div className="mt-8 grid gap-4">
                   {ecommerceCards.map((item, index) => (
                     <Reveal key={item.title} delay={0.05 * index}>
-                      <div className="rounded-[1.85rem] border border-white/90 bg-white/88 p-5 shadow-sm">
-                        <div className="flex items-start gap-4">
+                      <div className="rounded-[1.6rem] border border-white/90 bg-white/88 p-5 shadow-sm sm:rounded-[1.85rem]">
+                        <div className="flex items-start gap-3 sm:gap-4">
                           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(255,221,174,0.88),rgba(198,231,255,0.88))] text-slate-900">
                             <Icon name={item.icon} />
                           </span>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 import Icon from "./Icons";
@@ -9,11 +9,38 @@ import { trackingStatuses } from "./siteData";
 const MotionArticle = motion.article;
 const MotionForm = motion.form;
 
+function readStoredValue(key, fallback) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? { ...fallback, ...JSON.parse(stored) } : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function usePersistentState(key, fallback) {
+  const [value, setValue] = useState(() => readStoredValue(key, fallback));
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // Persistence is a convenience; the tools should still work if storage is unavailable.
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 export function VolumetricCalculatorCard({
   className = "surface-card rounded-[2rem] p-6",
   defaultValues = { length: "40", width: "32", height: "28", divisor: "5000" },
 }) {
-  const [form, setForm] = useState(defaultValues);
+  const [form, setForm] = usePersistentState("dolphin-volumetric-calculator", defaultValues);
   const length = Number(form.length) || 0;
   const width = Number(form.width) || 0;
   const height = Number(form.height) || 0;
@@ -30,7 +57,7 @@ export function VolumetricCalculatorCard({
 
   return (
     <MotionArticle whileHover={{ y: -6, scale: 1.01 }} transition={{ duration: 0.25 }} className={`${className} h-full`}>
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
           <Icon name="calculator" />
         </span>
@@ -72,7 +99,7 @@ export function RateCalculatorCard({
   className = "surface-card rounded-[2rem] p-6",
   defaultValues = { weight: "2.5", zone: "metro", service: "express", cod: "no" },
 }) {
-  const [form, setForm] = useState(defaultValues);
+  const [form, setForm] = usePersistentState("dolphin-rate-calculator", defaultValues);
   const weight = Number(form.weight) || 0;
   const codFactor = form.cod === "yes" ? 1.08 : 1;
   const estimatedRate = weight
@@ -89,7 +116,7 @@ export function RateCalculatorCard({
 
   return (
     <MotionArticle whileHover={{ y: -6, scale: 1.01 }} transition={{ duration: 0.25 }} className={`${className} h-full`}>
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
           <Icon name="wallet" />
         </span>
@@ -169,7 +196,7 @@ export function RateCalculatorCard({
 function ToolPreview({ title, description, icon, fields, buttonLabel, to, accentClass }) {
   return (
     <MotionArticle whileHover={{ y: -6, scale: 1.01 }} transition={{ duration: 0.25 }} className="surface-card h-full rounded-[2rem] p-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${accentClass}`}>
           <Icon name={icon} />
         </span>
@@ -238,10 +265,16 @@ export function ShippingToolPlaceholders() {
 
 export function TrackingPanel() {
   const location = useLocation();
-  const initialQuery = location.state?.query || "DLP-2048127";
-  const initialMode = location.state?.mode === "booking" ? "Booking Number" : "Container";
+  const storedTracking = readStoredValue("dolphin-tracking-panel", {
+    awb: "DLP-2048127",
+    searched: "DLP-2048127",
+    mode: "Container",
+  });
+  const initialQuery = location.state?.query || storedTracking.awb || "DLP-2048127";
+  const initialMode =
+    location.state?.mode === "booking" ? "Booking Number" : location.state?.mode ? "Container" : storedTracking.mode;
   const [awb, setAwb] = useState(initialQuery);
-  const [searched, setSearched] = useState(initialQuery);
+  const [searched, setSearched] = useState(location.state?.query || storedTracking.searched || initialQuery);
   const [mode, setMode] = useState(initialMode);
   const timeline = useMemo(
     () =>
@@ -258,6 +291,14 @@ export function TrackingPanel() {
     setSearched(awb || "DLP-2048127");
   };
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("dolphin-tracking-panel", JSON.stringify({ awb, searched, mode }));
+    } catch {
+      // Tracking still works without local storage.
+    }
+  }, [awb, searched, mode]);
+
   return (
     <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
       <Reveal delay={0.05}>
@@ -265,9 +306,9 @@ export function TrackingPanel() {
           whileHover={{ y: -6, scale: 1.01 }}
           transition={{ duration: 0.25 }}
           onSubmit={handleSubmit}
-          className="surface-card rounded-[2rem] p-6"
+          className="surface-card rounded-[1.6rem] p-5 sm:rounded-[2rem] sm:p-6"
         >
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
               <Icon name="route" />
             </span>
@@ -277,7 +318,7 @@ export function TrackingPanel() {
             </div>
           </div>
 
-          <div className="mt-6 flex gap-5 text-sm text-slate-700">
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm text-slate-700">
             {["Container", "Booking Number"].map((option) => (
               <label key={option} className="flex items-center gap-2">
                 <input
@@ -310,7 +351,7 @@ export function TrackingPanel() {
 
           <div className="mt-6 rounded-[1.75rem] bg-[linear-gradient(135deg,rgba(198,231,255,0.92),rgba(255,221,174,0.88))] px-5 py-5 text-slate-900 shadow-sm">
             <p className="text-sm text-slate-600">Latest lookup</p>
-            <p className="mt-2 font-display text-3xl">{searched}</p>
+            <p className="mt-2 break-all font-display text-2xl sm:text-3xl">{searched}</p>
             <p className="mt-1 text-xs uppercase tracking-[0.22em] text-slate-500">{mode}</p>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Current preview shows a shipment that is out for delivery and ready for final customer notification.
@@ -323,9 +364,9 @@ export function TrackingPanel() {
         <MotionArticle
           whileHover={{ y: -6, scale: 1.01 }}
           transition={{ duration: 0.25 }}
-          className="surface-card rounded-[2rem] p-6"
+          className="surface-card rounded-[1.6rem] p-5 sm:rounded-[2rem] sm:p-6"
         >
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-700">Tracking timeline</p>
               <h3 className="mt-2 font-display text-2xl text-slate-900">Delivery journey snapshot</h3>

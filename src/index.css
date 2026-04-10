@@ -49,6 +49,10 @@ body::before {
     radial-gradient(circle at 74% 76%, rgba(198, 231, 255, 0.26), transparent 22%);
 }
 
+#root {
+  min-height: 100vh;
+}
+
 section[id] {
   scroll-margin-top: 112px;
 }
@@ -85,6 +89,10 @@ svg {
   max-width: 100%;
 }
 
+:where(h1, h2, h3, p, a, button, span) {
+  overflow-wrap: break-word;
+}
+
 ::selection {
   background: rgba(198, 231, 255, 0.92);
   color: #0b2232;
@@ -98,6 +106,7 @@ svg {
 .section-transition {
   position: relative;
   isolation: isolate;
+  min-width: 0;
 }
 
 .section-transition::after {
@@ -293,14 +302,35 @@ svg {
 
 @media (max-width: 640px) {
   .platform-orbit {
-    width: min(100%, 22rem);
+    width: 100%;
+    aspect-ratio: auto;
+    display: grid;
+    gap: 0.75rem;
   }
 
   .platform-orbit__badge {
+    width: 100%;
     min-width: 4.9rem;
     min-height: 2rem;
     padding-inline: 0.55rem;
     font-size: 0.64rem;
+    animation: none;
+  }
+
+  .platform-orbit__ring {
+    display: none;
+  }
+
+  .platform-orbit__rotor {
+    position: static;
+    display: grid;
+    gap: 0.75rem;
+    animation: none;
+  }
+
+  .platform-orbit__position {
+    position: static;
+    transform: none;
   }
 }
 

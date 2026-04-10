@@ -13,8 +13,8 @@ function ActionButton({ action, primary = false }) {
   }
 
   const className = primary
-    ? "inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD9A6_100%)] px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_16px_34px_rgba(130,194,255,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(130,194,255,0.32)]"
-    : "inline-flex items-center justify-center rounded-full border border-sky-200 bg-white/85 px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white";
+    ? "inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD9A6_100%)] px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_16px_34px_rgba(130,194,255,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(130,194,255,0.32)] sm:w-auto"
+    : "inline-flex w-full items-center justify-center rounded-full border border-sky-200 bg-white/85 px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-white sm:w-auto";
 
   if (action.href) {
     return (
@@ -90,7 +90,7 @@ function HeroMediaVisual({ visualAnimationData, visualImage, visualAlt, visualTi
   }
 
   return (
-    <div className="relative flex min-h-[22rem] items-center justify-center overflow-hidden rounded-[2rem] border border-white/75 bg-white/[0.58] p-5 shadow-sm sm:min-h-[26rem] lg:min-h-[30rem]">
+    <div className="relative flex min-h-[18rem] items-center justify-center overflow-hidden rounded-[1.6rem] border border-white/75 bg-white/[0.58] p-4 shadow-sm sm:min-h-[26rem] sm:rounded-[2rem] sm:p-5 lg:min-h-[30rem]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(255,221,174,0.42),transparent_26%),radial-gradient(circle_at_78%_22%,rgba(198,231,255,0.48),transparent_24%)]" />
       {visualAnimationData ? (
         <Lottie
@@ -98,7 +98,7 @@ function HeroMediaVisual({ visualAnimationData, visualImage, visualAlt, visualTi
           loop
           autoplay
           rendererSettings={{ preserveAspectRatio: "xMidYMid meet" }}
-          className="relative z-10 mx-auto w-full max-w-[30rem]"
+          className="relative z-10 mx-auto w-full max-w-[22rem] sm:max-w-[30rem]"
         />
       ) : (
         <MotionImg
@@ -106,7 +106,7 @@ function HeroMediaVisual({ visualAnimationData, visualImage, visualAlt, visualTi
           alt={visualAlt || visualTitle}
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="relative z-10 mx-auto w-full max-w-[19rem] object-contain drop-shadow-[0_22px_32px_rgba(15,23,42,0.16)] sm:max-w-[23rem]"
+          className="relative z-10 mx-auto w-full max-w-[16rem] object-contain drop-shadow-[0_22px_32px_rgba(15,23,42,0.16)] sm:max-w-[23rem]"
         />
       )}
     </div>
@@ -134,7 +134,7 @@ export function PageHero({
             <span className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/85 px-4 py-1 text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-sky-700 shadow-sm">
               {eyebrow}
             </span>
-            <h1 className="mt-6 font-display text-4xl leading-[1.05] text-slate-900 sm:text-5xl lg:text-[4rem]">
+            <h1 className="mt-6 font-display text-3xl leading-[1.08] text-slate-900 sm:text-5xl lg:text-[4rem]">
               {title}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">{description}</p>
@@ -163,9 +163,9 @@ export function PageHero({
         </Reveal>
 
         <Reveal delay={0.12}>
-          <div className="hero-visual relative overflow-hidden rounded-[2.5rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(198,231,255,0.5),rgba(255,221,174,0.38))] p-5 shadow-[0_26px_70px_rgba(15,23,42,0.08)] sm:p-6 lg:p-7">
+          <div className="hero-visual relative overflow-hidden rounded-[2rem] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.88),rgba(198,231,255,0.5),rgba(255,221,174,0.38))] p-4 shadow-[0_26px_70px_rgba(15,23,42,0.08)] sm:rounded-[2.5rem] sm:p-6 lg:p-7">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:24px_24px]" />
-            <div className="absolute right-6 top-6 rounded-full border border-white/80 bg-white/80 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+            <div className="absolute right-4 top-4 rounded-full border border-white/80 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-slate-500 sm:right-6 sm:top-6 sm:px-4 sm:text-xs">
               {visualLabel}
             </div>
             <HeroMediaVisual

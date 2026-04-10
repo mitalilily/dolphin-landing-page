@@ -87,9 +87,9 @@ function FooterShowcase() {
 export function SiteHeader({ menuOpen, onToggleMenu, onCloseMenu }) {
   return (
     <header className="sticky top-0 z-50 border-b border-black/5 bg-[#FBFBFB]/92 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:gap-6 sm:px-6 sm:py-4 lg:px-8">
         <Link to="/" className="shrink-0">
-          <img src={logoImage} alt={companyProfile.name} className="h-14 w-auto object-contain sm:h-16" />
+          <img src={logoImage} alt={companyProfile.name} className="h-12 w-auto object-contain sm:h-16" />
         </Link>
 
         <nav className="hidden flex-1 items-center justify-center gap-2 lg:flex xl:gap-3">
@@ -151,7 +151,7 @@ export function SiteFooter() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_24%,rgba(255,208,164,0.42),transparent_20%),radial-gradient(circle_at_82%_22%,rgba(198,231,255,0.4),transparent_18%),radial-gradient(circle_at_50%_100%,rgba(213,199,255,0.28),transparent_28%)]" />
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-8 lg:py-20">
           <div className="relative z-10 max-w-2xl">
-            <h2 className="font-display text-4xl leading-tight text-slate-950 sm:text-5xl">
+            <h2 className="font-display text-3xl leading-tight text-slate-950 sm:text-5xl">
               Ready to ship smarter?
             </h2>
             <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
@@ -161,7 +161,7 @@ export function SiteFooter() {
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <a
                 href={`mailto:${companyProfile.email}`}
-                className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD8A8_100%)] px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_16px_32px_rgba(130,194,255,0.24)] transition hover:-translate-y-0.5"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#8FD8FF_0%,#FFD8A8_100%)] px-6 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_16px_32px_rgba(130,194,255,0.24)] transition hover:-translate-y-0.5 sm:w-auto"
               >
                 Get Started
               </a>

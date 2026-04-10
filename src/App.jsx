@@ -55,14 +55,37 @@ function RouteFallback() {
 
 function App() {
   const [showLoader, setShowLoader] = useState(true);
+  const [minimumElapsed, setMinimumElapsed] = useState(false);
+  const [pageLoaded, setPageLoaded] = useState(() =>
+    typeof document === "undefined" ? false : document.readyState === "complete"
+  );
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowLoader(false);
+    const minimumTimer = window.setTimeout(() => {
+      setMinimumElapsed(true);
     }, 1200);
 
-    return () => window.clearTimeout(timer);
+    const handleLoad = () => {
+      setPageLoaded(true);
+    };
+
+    if (document.readyState === "complete") {
+      handleLoad();
+    } else {
+      window.addEventListener("load", handleLoad, { once: true });
+    }
+
+    return () => {
+      window.clearTimeout(minimumTimer);
+      window.removeEventListener("load", handleLoad);
+    };
   }, []);
+
+  useEffect(() => {
+    if (minimumElapsed && pageLoaded) {
+      setShowLoader(false);
+    }
+  }, [minimumElapsed, pageLoaded]);
 
   return (
     <>
@@ -70,6 +93,7 @@ function App() {
         initial={false}
         animate={{ opacity: showLoader ? 0 : 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
+        className={showLoader ? "pointer-events-none" : undefined}
       >
         <Routes>
           <Route element={<MainLayout />}>
